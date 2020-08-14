@@ -190,6 +190,20 @@ def solve():
 
                 count += 1
                 break
+            else:
+                backtrack = bfs(current)
+                if backtrack:
+                    for i in range(len(backtrack) - 1):
+                        this_room = backtrack[i]
+                        for exit in g[this_room]:
+                            if g[this_room][exit] == backtrack[i +1]:
+                                player.travel(exit)
+                                traversal_path.append(exit)
+                                current = player.current_room.id
+                                pile.push(current)
+                                break
+
+
     print(g)
     print(count)
 
