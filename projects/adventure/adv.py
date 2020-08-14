@@ -49,31 +49,47 @@ def solve():
     pile.push(player.current_room.id)
     seen = set()
 
+
     while pile.size() > 0:
-        current = pile.pop()
-        if current not in g:
-            g[current] = {}
+        start = pile.pop()
+        if start not in g:
+            g[start] = {}
         for exit in player.current_room.get_exits():
-            g[current][exit] = "?"
-        seen.add(current)
+            if exit not in g[start]:
+                g[start][exit] = "?"
+        seen.add(start)
 
-        for exit in player.current_room.get_exits():
-            if g[current][exit] == "?":
-                #move to next room
-                player.travel(exit)
-                room = player.current_room.id
-                #add room to graph
-                if room not in g:
-                    g[room] = {}
-                #connect two rooms in graph
-                add_vert(current, exit, player.current_room.id)
-                #add to stack
-                if room not in seen:
-                    pile.push(room)
-                #add direction to my traversal
-                traversal_path.append(exit)
+        direciton = "n"
+        while g[current][direction] == "?":
+            player.travel(direction)
+            add_vert(current, direction, player.current_room.id)
+            traversal_path.append(direction)
+            current = player.current_room.id
+
+
+        # for exit in player.current_room.get_exits():
+        #     if g[current][exit] == "?":
+        #         #move to next room
+        #         player.travel(exit)
+        #         room = player.current_room.id
+        #         #add room to graph
+        #         if room not in g:
+        #             g[room] = {}
+        #         #connect two rooms in graph
+        #         add_vert(current, exit, player.current_room.id)
+        #         #add to stack
+        #         if room not in seen:
+        #             pile.push(room)
+        #         #add direction to my traversal
+        #         traversal_path.append(exit)
     print(g)
+    print(traversal_path)
 
+#take visited rooms
+#function that takes opposite of what was sent in
+#traverse that way
+
+#
         
         
 
@@ -126,3 +142,6 @@ else:
 #         break
 #     else:
 #         print("I did not understand that command.")
+
+
+
