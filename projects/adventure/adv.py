@@ -14,7 +14,7 @@ world = World()
 # You may uncomment the smaller graphs for development and testing purposes.
 #map_file = "maps/test_line.txt"
 #map_file = "maps/test_cross.txt"
-# map_file = "maps/test_loop.txt"
+#map_file = "maps/test_loop.txt"
 #map_file = "maps/test_loop_fork.txt"
 map_file = "maps/main_maze.txt"
 
@@ -32,9 +32,12 @@ player = Player(world.starting_room)
 traversal_path = []
 count = 0
 visited = set()
+
 #Traverse Maze
 def solve():
     global count
+    global steps
+
     g = {}
     d = {
         "n": "s",
@@ -47,10 +50,10 @@ def solve():
         g[next_room][d[direction]] = current
     
     def bfs(current):
-
+        # print("searching")
         q = Queue()
         q.enqueue([current])
-        global visited
+        seen = set()
         while q.size() > 0:
             if len(visited) == 500:
                 return None
@@ -59,17 +62,35 @@ def solve():
             path = list(path)
             to_enqueue = []
             for exit in g[room].keys():
-                print(exit, g[room][exit])
+                #print(exit, g[room][exit])
                 if g[room][exit] == "?":
 
                     return path
-                if g[room][exit] not in visited:
+                if g[room][exit] not in seen:
                     new_path = list(path) + [g[room][exit]]
                     to_enqueue.append(new_path)
             if to_enqueue:
                 for opt in to_enqueue:
                     q.enqueue(opt)
+            seen.add(room)
             visited.add(room)
+
+
+    def move(direction):
+        # print('moving')
+        player.travel(direction)
+        new_room = player.current_room.id
+        if new_room not in g:
+            g[new_room] = {}
+        for exit in player.current_room.get_exits():
+            if exit not in g[new_room]:
+                g[new_room][exit] = "?"
+        add_vert(current, direction, new_room)
+        traversal_path.append(direction)
+        #if last room has no "?" mark as visited:
+        if "?" not in g[g[new_room][d[direction]]].values():
+            visited.add(g[new_room][d[direction]])
+        return new_room
 
     pile = Stack()
     pile.push(player.current_room.id)
@@ -84,17 +105,23 @@ def solve():
             if exit not in g[start]:
                 g[start][exit] = "?"
         current = start
-        while "n" in g[current] and g[current]['n'] == "?":
-            player.travel('n')
-            new_room = player.current_room.id
-            if new_room not in g:
-                g[new_room] = {}
-            for exit in player.current_room.get_exits():
-                if exit not in g[new_room]:
-                    g[new_room][exit] = "?"
-            add_vert(current, 'n', new_room)
-            traversal_path.append('n')
-            current = new_room
+        if "n" in g[current] and g[current]['n'] == "?":
+            while "n" in g[current] and g[current]['n'] == "?":
+                current = move('n')
+        backtrack = bfs(current)
+        #loop through backtract until current is last value
+        if backtrack:
+            for i in range(len(backtrack) - 1):
+                this_room = backtrack[i]
+                for exit in g[this_room]:
+                    if g[this_room][exit] == backtrack[i +1]:
+                        player.travel(exit)
+                        traversal_path.append(exit)
+                        current = player.current_room.id
+                        break
+        if "e" in g[current] and g[current]['e'] == "?":
+            while "e" in g[current] and g[current]['e'] == "?":
+                current = move('e')
         backtrack = bfs(current)
         #loop through backtract until current is last value
         if backtrack:
@@ -107,17 +134,9 @@ def solve():
                         current = player.current_room.id
                         break
 
-        while "e" in g[current] and g[current]['e'] == "?":
-            player.travel('e')
-            new_room = player.current_room.id
-            if new_room not in g:
-                g[new_room] = {}
-            for exit in player.current_room.get_exits():
-                if exit not in g[new_room]:
-                    g[new_room][exit] = "?"
-            add_vert(current, 'e', new_room)
-            traversal_path.append('e')
-            current = new_room
+        if "s" in g[current] and g[current]['s'] == "?":
+            while "s" in g[current] and g[current]['s'] == "?":
+                current = move('s')
         backtrack = bfs(current)
         #loop through backtract until current is last value
         if backtrack:
@@ -130,17 +149,9 @@ def solve():
                         current = player.current_room.id
                         break
 
-        while "s" in g[current] and g[current]['s'] == "?":
-            player.travel('s')
-            new_room = player.current_room.id
-            if new_room not in g:
-                g[new_room] = {}
-            for exit in player.current_room.get_exits():
-                if exit not in g[new_room]:
-                    g[new_room][exit] = "?"
-            add_vert(current, 's', new_room)
-            traversal_path.append('s')
-            current = new_room
+        if "w" in g[current] and g[current]['w'] == "?":
+            while "w" in g[current] and g[current]['w'] == "?":
+                current = move('w')
         backtrack = bfs(current)
         #loop through backtract until current is last value
         if backtrack:
@@ -152,60 +163,13 @@ def solve():
                         traversal_path.append(exit)
                         current = player.current_room.id
                         break
-
-        while "w" in g[current] and g[current]['w'] == "?":
-            player.travel('w')
-            new_room = player.current_room.id
-            if new_room not in g:
-                g[new_room] = {}
-            for exit in player.current_room.get_exits():
-                if exit not in g[new_room]:
-                    g[new_room][exit] = "?"
-            add_vert(current, 'w', new_room)
-            traversal_path.append('w')
-            current = new_room
-        backtrack = bfs(current)
-        #loop through backtract until current is last value
-        if backtrack:
-            for i in range(len(backtrack) - 1):
-                this_room = backtrack[i]
-                for exit in g[this_room]:
-                    if g[this_room][exit] == backtrack[i +1]:
-                        player.travel(exit)
-                        traversal_path.append(exit)
-                        current = player.current_room.id
-                        break
-        for step in g[current]:
-            if g[current][step] == "?":
-                player.travel(step)
-                new_room = player.current_room.id
-                if new_room not in g:
-                    g[new_room] = {}
-                for exit in player.current_room.get_exits():
-                    if exit not in g[new_room]:
-                        g[new_room][exit] = "?"
-                add_vert(current, step, new_room)
-                traversal_path.append(step)
-                pile.push(new_room)
-
-                count += 1
-                break
-            else:
-                backtrack = bfs(current)
-                if backtrack:
-                    for i in range(len(backtrack) - 1):
-                        this_room = backtrack[i]
-                        for exit in g[this_room]:
-                            if g[this_room][exit] == backtrack[i +1]:
-                                player.travel(exit)
-                                traversal_path.append(exit)
-                                current = player.current_room.id
-                                pile.push(current)
-                                break
+        if len(visited) != 500:
+            pile.push(current)
+        steps = len(traversal_path)
 
 
-    print(g)
-    print(count)
+    # print(g)
+    # print(count)
 
 
 solve()

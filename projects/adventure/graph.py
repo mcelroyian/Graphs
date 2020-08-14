@@ -79,6 +79,7 @@ class Graph:
                 if nb not in seen:
                 #add to stack
                     pile.push(nb)
+                    
             #print
 
 
