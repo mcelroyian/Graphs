@@ -3,9 +3,22 @@ from player import Player
 from world import World
 from util import Stack, Queue
 from graph import Graph
+import pygame
 
 import random
 from ast import literal_eval
+
+#Setup Pygame
+win = pygame.display.set_mode((800, 800))
+pygame.display.set_caption("Lambda Maze")
+
+room_size = 10
+grid = 30
+width = room_size 
+height = room_size
+
+
+run = True
 
 # Load world
 world = World()
@@ -32,19 +45,23 @@ player = Player(world.starting_room)
 traversal_path = []
 count = 0
 visited = set()
+d = {
+    "n": "s",
+    "s": "n",
+    "e": "w",
+    "w": "e"
+}
+
+g = {}
 
 #Traverse Maze
 def solve():
     global count
     global steps
+    global d
+    global g
+    
 
-    g = {}
-    d = {
-        "n": "s",
-        "s": "n",
-        "e": "w",
-        "w": "e"
-    }
     def add_vert(current, direction, next_room):
         g[current][direction] = next_room
         g[next_room][d[direction]] = current
@@ -173,23 +190,80 @@ def solve():
 
 
 solve()
+# print(player.current_room.description)
+# print("holla")
+# print(traversal_path)
+fast = 16
+medium = 32
+slow = 60
 
-
-
-# TRAVERSAL TEST
-visited_rooms = set()
+i = 0
+prev_room_id = 0
+hallway = 0
 player.current_room = world.starting_room
-visited_rooms.add(player.current_room)
+while run:
+    pygame.time.delay(fast)
+    if i != 0:
+        prev_dir = traversal_path[i-1]
+        backwards = d[prev_dir]
+        prev_room_id = g[player.current_room.id][backwards]
+        x = room_graph[prev_room_id][0][0]
+        y = room_graph[prev_room_id][0][1]
+        prev_location = {"x":x,
+        "y":y}
+    else:
+        prev_location = {"x":room_graph[player.current_room.id][0][0], "y":room_graph[player.current_room.id][0][1]}
 
-for move in traversal_path:
-    player.travel(move)
-    visited_rooms.add(player.current_room)
 
-if len(visited_rooms) == len(room_graph):
-    print(f"TESTS PASSED: {len(traversal_path)} moves, {len(visited_rooms)} rooms visited")
-else:
-    print("TESTS FAILED: INCOMPLETE TRAVERSAL")
-    print(f"{len(room_graph) - len(visited_rooms)} unvisited rooms")
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            run = False
+
+    if event.type == pygame.KEYDOWN and event.key == pygame.K_1:
+        if i < 499:
+            #draw prev location
+            if prev_room_id in visited:
+                color = (248,248,255)
+            else:
+                color = (220,220,220)
+            pygame.draw.rect(win, color, ((prev_location['x'] * grid), (prev_location['y'] * grid), width, height))
+            #draw current location of player
+            if 'e' in g[player.current_room.id]:
+                hallway = ((player.current_room.x * grid) + width, (player.current_room.y * grid) + height // 4, grid - width, height // 2)
+                pygame.draw.rect(win,color, tuple(hallway))
+            if 's' in g[player.current_room.id]:
+                hallway = ((player.current_room.x * grid + width // 4), (player.current_room.y * grid) + height, width // 2, height * 2)
+                pygame.draw.rect(win,color, tuple(hallway))
+            if 'w' in g[player.current_room.id]:
+                hallway = ((player.current_room.x * grid) - (grid - width), (player.current_room.y * grid) + height // 4, grid - width, height // 2)
+                pygame.draw.rect(win,color, tuple(hallway))
+            if 'n' in g[player.current_room.id]:
+                hallway = ((player.current_room.x * grid) + width // 4, (player.current_room.y * grid) - (grid - height), width // 2, grid - height)
+                pygame.draw.rect(win,color, tuple(hallway))
+            pygame.draw.rect(win, (255, 0, 0), ((player.current_room.x * grid), (player.current_room.y * grid), room_size, room_size))
+            exits = player.current_room.get_exits()
+            pygame.display.update()
+            player.travel(traversal_path[i])
+            print("i", i, " ", "path: ", traversal_path[i])
+
+            i +=1
+
+
+
+# # TRAVERSAL TEST
+# visited_rooms = set()
+# player.current_room = world.starting_room
+# visited_rooms.add(player.current_room)
+
+# for move in traversal_path:
+#     player.travel(move)
+#     visited_rooms.add(player.current_room)
+
+# if len(visited_rooms) == len(room_graph):
+#     print(f"TESTS PASSED: {len(traversal_path)} moves, {len(visited_rooms)} rooms visited")
+# else:
+#     print("TESTS FAILED: INCOMPLETE TRAVERSAL")
+#     print(f"{len(room_graph) - len(visited_rooms)} unvisited rooms")
 
 
 
